@@ -94,65 +94,66 @@ while 1:
     datenow = str(year) + '.' + str(month) + '.' + str(day)
     for root, dirs, files in os.walk(path):
         folder.append(dirs)
+    try:  #wait for today's folder to be created
+        today_index = folder[0].index(datenow)
+        if today_index == 0:    #not update today's info
+            print "no folder before today"
+        else:                  # update previous info
 
-    today_index = folder[0].index(datenow)
-
-    if today_index == 0:    #not update today's info
-        print "no folder before today"
-    else:                  # update previous info
-
-        if today_index - num_prev_index <= -1:
-            print "all of the folders updated"
-        else:
-            uploadfolder = folder[0][today_index - num_prev_index]
-
-            f = open(path + "processed_data.txt","r")
-            line = f.read()
-            recorded_date = line.split('\n')
-            recorded_date.remove('')
-            f.close()
-
-            if uploadfolder in recorded_date:
-                num_prev_index = num_prev_index + 1  #the file is already updated and try previous folder
+            if today_index - num_prev_index <= -1:
+                print "all of the folders updated"
             else:
-                for root1, dirs1, files1 in os.walk(path + uploadfolder):
-                    data_set = files1
-                if len(data_set) == 0:
-                    f = open(path + "processed_data.txt","a+")
-                    f.write("%s\n"%(uploadfolder))    # no data and record also
-                    f.close()
-                    print str(uploadfolder) + " is empty"
+                uploadfolder = folder[0][today_index - num_prev_index]
+
+                f = open(path + "processed_data.txt","r")
+                line = f.read()
+                recorded_date = line.split('\n')
+                recorded_date.remove('')
+                f.close()
+
+                if uploadfolder in recorded_date:
+                    num_prev_index = num_prev_index + 1  #the file is already updated and try previous folder
                 else:
-                    print "currently process " + str(uploadfolder)
+                    for root1, dirs1, files1 in os.walk(path + uploadfolder):
+                        data_set = files1
+                    if len(data_set) == 0:
+                        f = open(path + "processed_data.txt","a+")
+                        f.write("%s\n"%(uploadfolder))    # no data and record also
+                        f.close()
+                        print str(uploadfolder) + " is empty"
+                    else:
+                        print "currently process " + str(uploadfolder)
 
-                    for i in range(len(data_set)):
-                        try:
-                            start_freq = data_set[i][-19] + data_set[i][-18] + data_set[i][-17] + data_set[i][-16]
-                            start_freq = int(start_freq)
-                            if start_freq < 2400 and start_freq >= 2300:
-                                if data_set[i][-1] == 'v':
-                                    hour = data_set[i][-33] + data_set[i][-32]
-                                    minu = data_set[i][-30] + data_set[i][-29]
-                                    sec  = data_set[i][-27] + data_set[i][-26]
+                        for i in range(len(data_set)):
+                            try:
+                                start_freq = data_set[i][-19] + data_set[i][-18] + data_set[i][-17] + data_set[i][-16]
+                                start_freq = int(start_freq)
+                                if start_freq < 2400 and start_freq >= 2300:
+                                    if data_set[i][-1] == 'v':
+                                        hour = data_set[i][-33] + data_set[i][-32]
+                                        minu = data_set[i][-30] + data_set[i][-29]
+                                        sec  = data_set[i][-27] + data_set[i][-26]
 
-                                    if int(hour) == 11 and int(minu) <= 30:    #only update 11 am
-                                        data_csv = open(path + '/'+ uploadfolder + '/' + data_set[i],"r")
-                                        for row in csv.DictReader(data_csv):
-                                            center_freq = row['Frequency [MHz]']
-                                            center_freq = center_freq[:7]
-                                            if center_freq[-1] == '0':
-                                                center_freq = center_freq[:6]
-                                            if center_freq in freq_uploaded:
-                                                record_time = uploadfolder + ' ' + hour + ':' + minu + ':' + sec
-                                                avg_power = row['Power Avg [dBm]']
-                                                avg_power = float(avg_power)
-                                                center_freq = int((float(center_freq) - 2302.5)/5 + 40) + 1   #convert to channel number
-                                                print "updating...."
-                                                write(center_freq, avg_power, record_time)
+                                        if int(hour) == 11 and int(minu) <= 30:    #only update 11 am
+                                            data_csv = open(path + '/'+ uploadfolder + '/' + data_set[i],"r")
+                                            for row in csv.DictReader(data_csv):
+                                                center_freq = row['Frequency [MHz]']
+                                                center_freq = center_freq[:7]
+                                                if center_freq[-1] == '0':
+                                                    center_freq = center_freq[:6]
+                                                if center_freq in freq_uploaded:
+                                                    record_time = uploadfolder + ' ' + hour + ':' + minu + ':' + sec
+                                                    avg_power = row['Power Avg [dBm]']
+                                                    avg_power = float(avg_power)
+                                                    center_freq = int((float(center_freq) - 2302.5)/5 + 40) + 1   #convert to channel number
+                                                    print "updating...."
+                                                    write(center_freq, avg_power, record_time)
 
-                        except:
-                            pass
-                    f = open(path + "processed_data.txt","a+")
-                    f.write("%s\n"%(uploadfolder))
-                    f.close()
-                    print "finish updating " + str(uploadfolder)
+                            except:
+                                pass
+                        f = open(path + "processed_data.txt","a+")
+                        f.write("%s\n"%(uploadfolder))
+                        f.close()
+                        print "finish updating " + str(uploadfolder)
+    except:
+        pass
